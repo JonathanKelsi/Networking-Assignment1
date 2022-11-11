@@ -22,21 +22,18 @@ if not (sys.argv[1].isnumeric() and int(sys.argv[1]) in range(1025, 2 ** 16)):
     print(usage_instructions)
     exit(1)
 
-
 # greet the user
 usr_msg = '    __  __               _ _          _       __     __       ________          __     _____  ____ \n' \
           '   / / / /__  ____ ___  (_| )_____   | |     / /__  / /_     / ____/ /_  ____ _/ /_   / ___/ / __ \\\n' \
-          '  / /_/ / _ \\/ __ `__ \\/ /|// ___/   | | /| / / _ \\/ __ \\   / /   / __ \\/ __ `/ __/  / __ \\ / /_/ /\n'\
+          '  / /_/ / _ \\/ __ `__ \\/ /|// ___/   | | /| / / _ \\/ __ \\   / /   / __ \\/ __ `/ __/  / __ \\ / /_/ /\n' \
           ' / __  /  __/ / / / / / /  (__  )    | |/ |/ /  __/ /_/ /  / /___/ / / / /_/ / /_   / /_/ / \\__, /\n' \
           '/_/ /_/\\___/_/ /_/ /_/_/  /____/     |__/|__/\\___/_.___/   \\____/_/ /_/\\__,_/\\__/   \\____(_)____/\n'
 
 print(usr_msg)
 
-
 # bind a name to the program
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', int(sys.argv[1])))
-
 
 # keep track of the users and the messages
 users = []
@@ -111,6 +108,7 @@ def leave_group(user_input, user_addr):
 
 def read_messages(user_input, user_addr):
     pass
+
 
 def parse_input(user_input, user_addr):
     if len(user_input) == 0:
