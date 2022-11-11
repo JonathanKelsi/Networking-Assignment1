@@ -92,8 +92,25 @@ def change_name(user_input, user_addr):
     if not index:
         return
 
+    messages.append(f'{users[index][0]} changed his name to {new_name}')
     users[index][0] = new_name
 
+
+def leave_group(user_input, user_addr):
+    if len(user_input) > 1:
+        return
+
+    index = get_user_by_addr(user_addr)
+
+    if not index:
+        return
+
+    messages.append(f'{users[index][0]} has left the group')
+    del users[index]
+
+
+def read_messages(user_input, user_addr):
+    pass
 
 def parse_input(user_input, user_addr):
     if len(user_input) == 0:
@@ -106,6 +123,8 @@ def parse_input(user_input, user_addr):
             send_message(user_input, user_addr)
         case '3':
             change_name(user_input, user_addr)
+        case '4':
+            leave_group(user_input, user_addr)
 
 
 while True:
