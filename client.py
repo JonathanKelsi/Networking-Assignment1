@@ -9,9 +9,8 @@ default_buffer_size = 1024
 
 while True:
     message = input()
-    if message == 'exit':
-        break
-    s.sendto(message.encode('ascii') , (server_ip, server_port))
+    s.sendto(message.encode('utf-8'), (server_ip, server_port))
+
     data, addr = s.recvfrom(default_buffer_size)
     print(data)
 
