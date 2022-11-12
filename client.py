@@ -10,6 +10,7 @@ usr_msg = '    __  __               _ _          _       __     __       _______
 
 print(usr_msg)
 
+
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 server_ip = sys.argv[1]
