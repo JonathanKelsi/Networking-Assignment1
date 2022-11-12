@@ -21,6 +21,7 @@ while True:
     s.sendto(message.encode(), (server_ip, server_port))
 
     data, addr = s.recvfrom(1024)
+
     for i in range(0, int(data.decode())):
         data, addr = s.recvfrom(1024)
         print(data.decode())

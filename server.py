@@ -46,7 +46,7 @@ def join_chat(user_input, user_addr):
         return -1
 
     # add the user to the dictionary, and save a pointer to his first unread message
-    users[user_addr] = (name.group(1), 0)
+    users[user_addr] = (name.group(1), len(messages))
     messages.append(f'{name.group(1)} has joined')
 
 
@@ -111,11 +111,15 @@ def read_messages(user_input, user_addr):
     index = min([v[1] for v in users.values()])
     del messages[0: index]
 
-    for v in users.values():
-        v = (v[0], v[1] - index)
+    for k in users.keys():
+        users[k] = (users[k][0], users[k][1] - index)
 
 
 def parse_input(user_input, user_addr):
+    # if no input was detected
+    if len(user_input) == 0:
+        s.sendto(b'0', user_addr) #TODO
+
     option = user_input[0]
 
     options = {'1': join_chat,
@@ -128,12 +132,18 @@ def parse_input(user_input, user_addr):
         did_succeed = options[option](user_input, user_addr)
 
         if did_succeed == -1:
-            s.sendto(b'0', user_addr)
-            return
+            s.sendto(b'1', user_addr)
+            s.sendto(b'Illegal Request', user_addr)
 
-        if option != '5':
+        # TODO
+        elif option in ['2', '3', '5']:
             read_messages('5', user_addr)
+
+        else:
+            s.sendto(b'0', user_addr)
+
 
 while True:
     data, addr = s.recvfrom(1024)
+    print(data.decode())
     parse_input(data.decode(), addr)
