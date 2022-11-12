@@ -116,7 +116,6 @@ def read_messages(user_input, user_addr):
         v[1] -= index
 
 
-
 def parse_input(user_input, user_addr):
     if len(user_input) == 0:
         return
