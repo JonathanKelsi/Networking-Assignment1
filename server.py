@@ -32,22 +32,13 @@ usr_msg = '    __  __               _ _          _       __     __       _______
 print(usr_msg)
 
 # bind a name to the program
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind(('', int(sys.argv[1])))
 
+
 # keep track of the users and the messages
-users = []
+users = {}
 messages = []
-
-
-# utility functions
-def get_user_by_addr(user_addr):
-    user_index = [i for i, u in enumerate(users) if u[1] == user_addr]
-
-    if len(user_index) == 0:
-        return None
-
-    return user_index[0]
 
 
 # functionality
@@ -57,17 +48,16 @@ def join_chat(user_input, user_addr):
     if not name:
         return
 
-    if get_user_by_addr(user_addr):
+    if user_addr in users:
         return
 
-    users.append((name, user_addr, 0))
-    messages.append((name, f'{name} has joined'))
+    # add the user to the dictionary, and save a pointer to his first unread message
+    users[user_addr] = (name, 0)
+    messages.append(f'{name} has joined')
 
 
 def send_message(user_input, user_addr):
-    index = get_user_by_addr(user_addr)
-
-    if not index:
+    if user_addr not in users:
         return
 
     message = re.search('2 (.*)', user_input).group(1)
@@ -75,7 +65,7 @@ def send_message(user_input, user_addr):
     if not message:
         return
 
-    messages.append((users[index][1], message))
+    messages.append(f'{users[user_addr][0]}: {message}')
 
 
 def change_name(user_input, user_addr):
@@ -84,30 +74,46 @@ def change_name(user_input, user_addr):
     if not new_name:
         return
 
-    index = get_user_by_addr(user_addr)
-
-    if not index:
+    if user_addr not in users:
         return
 
-    messages.append(f'{users[index][0]} changed his name to {new_name}')
-    users[index][0] = new_name
+    messages.append(f'{users[user_addr][0]} changed his name to {new_name}')
+    users[user_addr][0] = new_name
 
 
 def leave_group(user_input, user_addr):
     if len(user_input) > 1:
         return
 
-    index = get_user_by_addr(user_addr)
-
-    if not index:
+    if user_addr not in users:
         return
 
-    messages.append(f'{users[index][0]} has left the group')
-    del users[index]
+    messages.append(f'{users[user_addr][0]} has left the group')
+    users.pop(user_addr)
 
 
 def read_messages(user_input, user_addr):
-    pass
+    if user_addr not in users:
+        return
+
+    if users[user_addr][1] == len(messages):
+        return
+
+    # send the unread messages to the user
+    unread_messages = [messages[i] for i in range(users[user_addr][1], len(messages))]
+
+    for message in unread_messages:
+        s.sendto(message, user_addr)
+
+    # update the user's first unread message
+    users[user_addr][1] = len(messages)
+
+    # delete unnecessary messages, and update all users' unread messages count
+    index = min([v[1] for k, v in users])
+    del messages[0: index + 1]
+
+    for k, v in users:
+        v[1] -= index
 
 
 def parse_input(user_input, user_addr):
