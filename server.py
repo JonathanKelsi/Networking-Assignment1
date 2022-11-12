@@ -3,6 +3,7 @@ import sys
 import re
 # TODO: talk 2 hemi
 
+
 # check input validity
 usage_instructions = 'Usage: python server.py [port]\n' \
                      'Try "python server.py --help" for more information.'
@@ -23,69 +24,63 @@ if not (sys.argv[1].isnumeric() and int(sys.argv[1]) in range(1025, 2 ** 16)):
     print(usage_instructions)
     exit(1)
 
-# greet the user
-usr_msg = '    __  __               _ _          _       __     __       ________          __     _____  ____ \n' \
-          '   / / / /__  ____ ___  (_| )_____   | |     / /__  / /_     / ____/ /_  ____ _/ /_   / ___/ / __ \\\n' \
-          '  / /_/ / _ \\/ __ `__ \\/ /|// ___/   | | /| / / _ \\/ __ \\   / /   / __ \\/ __ `/ __/  / __ \\ / /_/ /\n'\
-          ' / __  /  __/ / / / / / /  (__  )    | |/ |/ /  __/ /_/ /  / /___/ / / / /_/ / /_   / /_/ / \\__, /\n' \
-          '/_/ /_/\\___/_/ /_/ /_/_/  /____/     |__/|__/\\___/_.___/   \\____/_/ /_/\\__,_/\\__/   \\____(_)____/\n'
-
-print(usr_msg)
 
 # bind a name to the program
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind(('', int(sys.argv[1])))
 
+
 # keep track of the users and the messages
 users = {}
 messages = []
 
+
 # functionality
 def join_chat(user_input, user_addr):
-    name = re.search('1 (.*)', user_input).group(1)
+    name = re.search('1 (.*)', user_input)
 
     if not name:
-        return 0
+        return -1
 
     if user_addr in users:
-        return 0
+        return -1
 
     # add the user to the dictionary, and save a pointer to his first unread message
-    users[user_addr] = (name, 0)
-    messages.append(f'{name} has joined')
+    users[user_addr] = (name.group(1), 0)
+    messages.append(f'{name.group(1)} has joined')
 
 
 def send_message(user_input, user_addr):
     if user_addr not in users:
-        return 0
+        return -1
 
-    message = re.search('2 (.*)', user_input).group(1)
+    message = re.search('2 (.*)', user_input)
 
     if not message:
-        return 0
+        return -1
 
-    messages.append(f'{users[user_addr][0]}: {message}')
+    messages.append(f'{users[user_addr][0]}: {message.group(1)}')
 
 
 def change_name(user_input, user_addr):
-    new_name = re.search('3 (.*)', user_input).group(1)
+    new_name = re.search('3 (.*)', user_input)
 
     if not new_name:
-        return 0
+        return -1
 
     if user_addr not in users:
-        return 0
+        return -1
 
-    messages.append(f'{users[user_addr][0]} changed his name to {new_name}')
-    users[user_addr][0] = new_name
+    messages.append(f'{users[user_addr][0]} changed his name to {new_name.group(1)}')
+    users[user_addr] = (new_name.group(1), users[user_addr][1])
 
 
 def leave_group(user_input, user_addr):
     if len(user_input) > 1:
-        return 0
+        return -1
 
     if user_addr not in users:
-        return 0
+        return -1
 
     messages.append(f'{users[user_addr][0]} has left the group')
     users.pop(user_addr)
@@ -93,35 +88,34 @@ def leave_group(user_input, user_addr):
 
 def read_messages(user_input, user_addr):
     if len(user_input) > 1:
-        return 0
+        return -1
 
     if user_addr not in users:
-        return 0
+        return -1
 
     if users[user_addr][1] == len(messages):
-        return 0
+        return -1
 
     # tell the user how many messages to read, and send the unread messages to the user
     unread_messages = [messages[i] for i in range(users[user_addr][1], len(messages))]
 
+    s.sendto(str(len(unread_messages)).encode(), user_addr)
+
     for message in unread_messages:
-        s.sendto(message, user_addr)
+        s.sendto(message.encode(), user_addr)
 
     # update the user's first unread message
-    users[user_addr][1] = len(messages)
+    users[user_addr] = (users[user_addr][0], len(messages))
 
     # delete unnecessary messages, and update all users' last unread message
-    index = min([v[1] for k, v in users])
-    del messages[0: index + 1]
+    index = min([v[1] for v in users.values()])
+    del messages[0: index]
 
-    for k, v in users:
-        v[1] -= index
+    for v in users.values():
+        v = (v[0], v[1] - index)
 
 
 def parse_input(user_input, user_addr):
-    if len(user_input) == 0:
-        return
-
     option = user_input[0]
 
     options = {'1': join_chat,
@@ -131,11 +125,15 @@ def parse_input(user_input, user_addr):
                '5': read_messages}
 
     if option in options:
-        options[option](user_input, user_addr)
+        did_succeed = options[option](user_input, user_addr)
 
-        read_messages(user_input, user_addr)
+        if did_succeed == -1:
+            s.sendto(b'0', user_addr)
+            return
+
+        if option != '5':
+            read_messages('5', user_addr)
 
 while True:
     data, addr = s.recvfrom(1024)
-    # parse_input(data.decode("utf-8"), addr)
-    print(data.decode("utf-8"), addr)
+    parse_input(data.decode(), addr)
