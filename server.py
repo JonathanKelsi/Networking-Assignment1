@@ -93,6 +93,9 @@ def leave_group(user_input, user_addr):
 
 
 def read_messages(user_input, user_addr):
+    if len(user_input) > 1:
+        return
+
     if user_addr not in users:
         return
 
@@ -120,20 +123,24 @@ def parse_input(user_input, user_addr):
     if len(user_input) == 0:
         return
 
-    if user_input[0] == '1':
-        join_chat(user_input, user_addr)
-    elif user_input[0] == '2':
-        send_message(user_input, user_addr)
-    elif user_input[0] == '3':
-        change_name(user_input, user_addr)
-    elif user_input[0] == '4':
-        leave_group(user_input, user_addr)
+    match user_input[0]:
+        case '1':
+            join_chat(user_input, user_addr)
+        case '2':
+            send_message(user_input, user_addr)
+        case '3':
+            change_name(user_input, user_addr)
+        case '4':
+            leave_group(user_input, user_addr)
+        case '5':
+            leave_group(user_input, user_addr)
+
 
 
 while True:
     data, addr = s.recvfrom(1024)
-    print(str(data), addr)
-    s.sendto(data.upper(), addr)
+    # parse_input(data.decode("utf-8"), addr)
+    print(data.decode("utf-8"), addr)
 
 
 
