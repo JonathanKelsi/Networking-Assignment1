@@ -108,7 +108,7 @@ def read_messages(user_input, user_addr):
     # update the user's first unread message
     users[user_addr][1] = len(messages)
 
-    # delete unnecessary messages, and update all users' unread messages count
+    # delete unnecessary messages, and update all users' last unread message
     index = min([v[1] for k, v in users])
     del messages[0: index + 1]
 
