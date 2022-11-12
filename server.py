@@ -120,15 +120,14 @@ def parse_input(user_input, user_addr):
     if len(user_input) == 0:
         return
 
-    match user_input[0]:
-        case '1':
-            join_chat(user_input, user_addr)
-        case '2':
-            send_message(user_input, user_addr)
-        case '3':
-            change_name(user_input, user_addr)
-        case '4':
-            leave_group(user_input, user_addr)
+    if user_input[0] == '1':
+        join_chat(user_input, user_addr)
+    elif user_input[0] == '2':
+        send_message(user_input, user_addr)
+    elif user_input[0] == '3':
+        change_name(user_input, user_addr)
+    elif user_input[0] == '4':
+        leave_group(user_input, user_addr)
 
 
 while True:
