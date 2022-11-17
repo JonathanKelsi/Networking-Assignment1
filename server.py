@@ -1,7 +1,6 @@
 import socket
 import sys
 import re
-# TODO: talk 2 hemi
 
 
 # check input validity
@@ -20,7 +19,7 @@ if sys.argv[1] == '--help':
     print(server_description)
     exit(1)
 
-if not (sys.argv[1].isnumeric() and int(sys.argv[1]) in range(1025, 2 ** 16)):
+if not (sys.argv[1].isnumeric() and int(sys.argv[1]) in range(1025, 2 ** 16 - 1)):
     print(usage_instructions)
     exit(1)
 
@@ -36,38 +35,23 @@ messages = []
 
 
 # functionality
-def join_chat(user_input, user_addr):
-    name = re.search('1 (.*)', user_input)
-
-    if not name:
-        return -1
-
+def join_chat(user_addr, name):
     if user_addr in users:
         return -1
 
     # add the user to the dictionary, and save a pointer to his first unread message
-    users[user_addr] = (name.group(1), len(messages))
-    messages.append(f'{name.group(1)} has joined')
+    users[user_addr] = (name, len(messages))
+    messages.append(f'{name} has joined')
 
 
-def send_message(user_input, user_addr):
+def send_message(user_addr, message):
     if user_addr not in users:
-        return -1
-
-    message = re.search('2 (.*)', user_input)
-
-    if not message:
         return -1
 
     messages.append(f'{users[user_addr][0]}: {message.group(1)}')
 
 
-def change_name(user_input, user_addr):
-    new_name = re.search('3 (.*)', user_input)
-
-    if not new_name:
-        return -1
-
+def change_name(user_addr, new_name):
     if user_addr not in users:
         return -1
 
@@ -75,10 +59,7 @@ def change_name(user_input, user_addr):
     users[user_addr] = (new_name.group(1), users[user_addr][1])
 
 
-def leave_group(user_input, user_addr):
-    if len(user_input) > 1:
-        return -1
-
+def leave_group(user_addr):
     if user_addr not in users:
         return -1
 
@@ -86,10 +67,7 @@ def leave_group(user_input, user_addr):
     users.pop(user_addr)
 
 
-def read_messages(user_input, user_addr):
-    if len(user_input) > 1:
-        return -1
-
+def read_messages(user_addr):
     if user_addr not in users:
         return -1
 
@@ -115,32 +93,40 @@ def read_messages(user_input, user_addr):
         users[k] = (users[k][0], users[k][1] - index)
 
 
+def send_error_message(user_addr):
+    s.sendto(b'1', user_addr)
+    s.sendto(b'Illegal Request', user_addr)
+
+
 def parse_input(user_input, user_addr):
-    # if no input was detected
-    if len(user_input) == 0:
-        s.sendto(b'0', user_addr) #TODO
+    # check for format validity
+    input_type1 = re.search("([1-3]) (.+)", user_input)
+    input_type2 = re.search("([4-5])", user_input)
 
-    option = user_input[0]
+    if not input_type1 and not input_type2:
+        send_error_message(user_addr)
+        return
 
+    # handle the request
     options = {'1': join_chat,
                '2': send_message,
                '3': change_name,
                '4': leave_group,
                '5': read_messages}
 
-    if option in options:
-        did_succeed = options[option](user_input, user_addr)
+    if input_type1 is not None:
+        option, content = input_type1.group(1), input_type1.group(2)
+        did_succeed = options[option](user_addr, content)
 
-        if did_succeed == -1:
-            s.sendto(b'1', user_addr)
-            s.sendto(b'Illegal Request', user_addr)
+    elif input_type2 is not None:
+        option = input_type2.group(1)
+        did_succeed = options[option](user_addr)
 
-        # TODO
-        elif option in ['2', '3', '5']:
-            read_messages('5', user_addr)
+    if did_succeed == -1:
+        send_error_message(user_addr)
 
-        else:
-            s.sendto(b'0', user_addr)
+    elif option in ['2', '3']:
+        read_messages(user_addr)
 
 
 while True:
