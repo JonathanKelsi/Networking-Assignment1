@@ -48,15 +48,15 @@ def send_message(user_addr, message):
     if user_addr not in users:
         return -1
 
-    messages.append(f'{users[user_addr][0]}: {message.group(1)}')
+    messages.append(f'{users[user_addr][0]}: {message}')
 
 
 def change_name(user_addr, new_name):
     if user_addr not in users:
         return -1
 
-    messages.append(f'{users[user_addr][0]} changed his name to {new_name.group(1)}')
-    users[user_addr] = (new_name.group(1), users[user_addr][1])
+    messages.append(f'{users[user_addr][0]} changed his name to {new_name}')
+    users[user_addr] = (new_name, users[user_addr][1])
 
 
 def leave_group(user_addr):
@@ -72,7 +72,7 @@ def read_messages(user_addr):
         return -1
 
     if users[user_addr][1] == len(messages):
-        return -1
+        return
 
     # tell the user how many messages to read, and send the unread messages to the user
     unread_messages = [messages[i] for i in range(users[user_addr][1], len(messages))]
@@ -127,6 +127,9 @@ def parse_input(user_input, user_addr):
 
     elif option in ['2', '3']:
         read_messages(user_addr)
+
+    else:
+        s.sendto(b'0', user_addr)
 
 
 while True:
