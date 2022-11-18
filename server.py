@@ -39,8 +39,13 @@ def join_chat(user_addr, name):
     if user_addr in users:
         return -1
 
+    # send the current users
+    if len(users) != 0:
+        s.sendto(b'1', user_addr)
+        s.sendto((', '.join([u[0] for u in users.values()][::-1])).encode(), user_addr)
+
     # add the user to the dictionary, and save a pointer to his first unread message
-    users[user_addr] = (name, len(messages))
+    users[user_addr] = (name, len(messages) + 1)
     messages.append(f'{name} has joined')
 
 
@@ -134,5 +139,8 @@ def parse_input(user_input, user_addr):
 
 while True:
     data, addr = s.recvfrom(1024)
-    print(data.decode())
+
+    print(users)
+    print(messages)
+
     parse_input(data.decode(), addr)
