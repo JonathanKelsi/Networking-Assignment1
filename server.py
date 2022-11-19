@@ -35,52 +35,71 @@ messages = []
 
 
 # functionality
+def send_error_message(user_addr):
+    s.sendto(b'1', user_addr)
+    s.sendto(b'Illegal Request', user_addr)
+
+
+def skip_recv(user_addr):
+    s.sendto(b'0', user_addr)
+
+
 def join_chat(user_addr, name):
     if user_addr in users:
-        return -1
+        send_error_message(user_addr)
+        return
 
     # send the current users
     if len(users) != 0:
         s.sendto(b'1', user_addr)
         s.sendto((', '.join([u[0] for u in users.values()][::-1])).encode(), user_addr)
 
+    else:
+        skip_recv(user_addr)
+
     # add the user to the dictionary, and save a pointer to his first unread message
     users[user_addr] = (name, len(messages) + 1)
-    messages.append(f'{name} has joined')
+    messages.append((user_addr, f'{name} has joined'))
 
 
 def send_message(user_addr, message):
     if user_addr not in users:
-        return -1
+        send_error_message(user_addr)
+        return
 
-    messages.append(f'{users[user_addr][0]}: {message}')
+    messages.append((user_addr, f'{users[user_addr][0]}: {message}'))
 
 
 def change_name(user_addr, new_name):
     if user_addr not in users:
-        return -1
+        send_error_message(user_addr)
+        return
 
-    messages.append(f'{users[user_addr][0]} changed his name to {new_name}')
+    messages.append((user_addr, f'{users[user_addr][0]} changed his name to {new_name}'))
     users[user_addr] = (new_name, users[user_addr][1])
 
 
 def leave_group(user_addr):
     if user_addr not in users:
-        return -1
+        send_error_message(user_addr)
+        return
 
-    messages.append(f'{users[user_addr][0]} has left the group')
+    messages.append((user_addr, f'{users[user_addr][0]} has left the group'))
     users.pop(user_addr)
+    skip_recv(user_addr)
 
 
 def read_messages(user_addr):
     if user_addr not in users:
-        return -1
+        send_error_message(user_addr)
+        return
 
     if users[user_addr][1] == len(messages):
+        skip_recv(user_addr)
         return
 
     # tell the user how many messages to read, and send the unread messages to the user
-    unread_messages = [messages[i] for i in range(users[user_addr][1], len(messages))]
+    unread_messages = [messages[i][1] for i in range(users[user_addr][1], len(messages)) if messages[i][0] != user_addr]
 
     s.sendto(str(len(unread_messages)).encode(), user_addr)
 
@@ -98,15 +117,10 @@ def read_messages(user_addr):
         users[k] = (users[k][0], users[k][1] - index)
 
 
-def send_error_message(user_addr):
-    s.sendto(b'1', user_addr)
-    s.sendto(b'Illegal Request', user_addr)
-
-
 def parse_input(user_input, user_addr):
     # check for format validity
-    input_type1 = re.search("([1-3]) (.+)", user_input)
-    input_type2 = re.search("([4-5])", user_input)
+    input_type1 = re.search("^([1-3]) (.+)", user_input)
+    input_type2 = re.search("^([4-5])$", user_input)
 
     if not input_type1 and not input_type2:
         send_error_message(user_addr)
@@ -121,26 +135,17 @@ def parse_input(user_input, user_addr):
 
     if input_type1 is not None:
         option, content = input_type1.group(1), input_type1.group(2)
-        did_succeed = options[option](user_addr, content)
+        options[option](user_addr, content)
 
     elif input_type2 is not None:
         option = input_type2.group(1)
-        did_succeed = options[option](user_addr)
+        options[option](user_addr)
 
-    if did_succeed == -1:
-        send_error_message(user_addr)
-
-    elif option in ['2', '3']:
+    if option in ['2', '3']:
         read_messages(user_addr)
-
-    else:
-        s.sendto(b'0', user_addr)
 
 
 while True:
     data, addr = s.recvfrom(1024)
-
-    print(users)
-    print(messages)
-
+    print(data.decode())
     parse_input(data.decode(), addr)
