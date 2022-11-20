@@ -34,16 +34,23 @@ users = {}
 messages = []
 
 
-# functionality
+# utility function
+def send_data(user_addr, n, lst):
+    s.sendto(str(n).encode(), user_addr)
+
+    for m in lst:
+        s.sendto(m.encode(), user_addr)
+
+
 def send_error_message(user_addr):
-    s.sendto(b'1', user_addr)
-    s.sendto(b'Illegal Request', user_addr)
+    send_data(user_addr, 1, ['Illegal Request'])
 
 
 def skip_recv(user_addr):
-    s.sendto(b'0', user_addr)
+    send_data(user_addr, 0, [])
 
 
+# functionality
 def join_chat(user_addr, name):
     if user_addr in users:
         send_error_message(user_addr)
@@ -51,8 +58,7 @@ def join_chat(user_addr, name):
 
     # send the current users
     if len(users) != 0:
-        s.sendto(b'1', user_addr)
-        s.sendto((', '.join([u[0] for u in users.values()][::-1])).encode(), user_addr)
+        send_data(user_addr, 1, [(', '.join([u[0] for u in users.values()][::-1]))])
 
     else:
         skip_recv(user_addr)
@@ -75,7 +81,7 @@ def change_name(user_addr, new_name):
         send_error_message(user_addr)
         return
 
-    messages.append((user_addr, f'{users[user_addr][0]} changed his name to {new_name}'))
+    messages.append((user_addr, f'{users[user_addr][0]} has changed his name to {new_name}'))
     users[user_addr] = (new_name, users[user_addr][1])
 
 
@@ -101,10 +107,7 @@ def read_messages(user_addr):
     # tell the user how many messages to read, and send the unread messages to the user
     unread_messages = [messages[i][1] for i in range(users[user_addr][1], len(messages)) if messages[i][0] != user_addr]
 
-    s.sendto(str(len(unread_messages)).encode(), user_addr)
-
-    for message in unread_messages:
-        s.sendto(message.encode(), user_addr)
+    send_data(user_addr, len(unread_messages), unread_messages)
 
     # update the user's first unread message
     users[user_addr] = (users[user_addr][0], len(messages))
@@ -147,5 +150,4 @@ def parse_input(user_input, user_addr):
 
 while True:
     data, addr = s.recvfrom(1024)
-    print(data.decode())
     parse_input(data.decode(), addr)

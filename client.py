@@ -1,6 +1,5 @@
 import socket
 import sys
-import re
 
 
 # utility function
