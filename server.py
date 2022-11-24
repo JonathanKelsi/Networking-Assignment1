@@ -34,7 +34,7 @@ users = {}
 messages = []
 
 
-# utility functions
+# utility functions for communication
 def send_data(user_addr, n, lst):
     s.sendto(str(n).encode(), user_addr)
 
@@ -148,6 +148,7 @@ def parse_input(user_input, user_addr):
         read_messages(user_addr)
 
 
+# communicate with clients
 while True:
     data, addr = s.recvfrom(1024)
     parse_input(data.decode(), addr)

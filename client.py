@@ -33,12 +33,13 @@ if not (sys.argv[2].isnumeric() and int(sys.argv[2]) in range(1025, 2 ** 16 - 1)
     print(usage_instructions)
     exit(1)
 
-# do other stuff
+# connect to the server
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 server_ip = sys.argv[1]
 server_port = int(sys.argv[2])
 
+# communicate with the server
 while True:
     message = input()
     s.sendto(message.encode(), (server_ip, server_port))
