@@ -34,7 +34,7 @@ users = {}
 messages = []
 
 
-# utility functions for communication
+# utility functions for communication with client
 def send_data(user_addr, n, lst):
     s.sendto(str(n).encode(), user_addr)
 
@@ -65,7 +65,7 @@ def join_chat(user_addr, name):
 
     # add the user to the dictionary, and save a pointer to his first unread message
     users[user_addr] = (name, len(messages) + 1)
-    messages.append((user_addr, f'{name} has joined'))
+    messages.append((user_addr, name + ' has joined'))
 
 
 def send_message(user_addr, message):
@@ -73,7 +73,7 @@ def send_message(user_addr, message):
         send_error_message(user_addr)
         return
 
-    messages.append((user_addr, f'{users[user_addr][0]}: {message}'))
+    messages.append((user_addr, users[user_addr][0] + ': ' + message))
 
 
 def change_name(user_addr, new_name):
@@ -81,7 +81,7 @@ def change_name(user_addr, new_name):
         send_error_message(user_addr)
         return
 
-    messages.append((user_addr, f'{users[user_addr][0]} has changed his name to {new_name}'))
+    messages.append((user_addr, users[user_addr][0] + ' has changed his name to ' + new_name))
     users[user_addr] = (new_name, users[user_addr][1])
 
 
@@ -90,7 +90,7 @@ def leave_group(user_addr):
         send_error_message(user_addr)
         return
 
-    messages.append((user_addr, f'{users[user_addr][0]} has left the group'))
+    messages.append((user_addr, users[user_addr][0] + ' has left the group'))
     users.pop(user_addr)
     skip_recv(user_addr)
 
