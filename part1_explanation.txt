@@ -1,0 +1,49 @@
+A port number is a unique identifier assigned to a connection endpoint, to direct data to a specific service.
+In other words, we use a port number in order to differentiate between processes running on a machine.
+
+In this part, we've given our server the port number 12345. Using it, our client was able to locate the server
+on the machine we ran both of them on, and the server was able to locate the client.
+
+From WireShark:
+
+"Frame 1: 93 bytes on wire (744 bits), 93 bytes captured (744 bits) on interface lo, id 0
+Ethernet II, Src: 00:00:00_00:00:00 (00:00:00:00:00:00), Dst: 00:00:00_00:00:00 (00:00:00:00:00:00)
+Internet Protocol Version 4, Src: 127.0.0.1, Dst: 127.0.0.1
+User Datagram Protocol, Src Port: 46209, Dst Port: 12345
+Data (51 bytes)"
+
+"Frame 2: 93 bytes on wire (744 bits), 93 bytes captured (744 bits) on interface lo, id 0
+Ethernet II, Src: 00:00:00_00:00:00 (00:00:00:00:00:00), Dst: 00:00:00_00:00:00 (00:00:00:00:00:00)
+Internet Protocol Version 4, Src: 127.0.0.1, Dst: 127.0.0.1
+User Datagram Protocol, Src Port: 12345, Dst Port: 46209
+Data (51 bytes)"
+
+As we can see, the frames captured in the trace specify the source and destination ports.
+The information regrading the ports is specified in the Transport layer.
+
+From the WireShark captures, the packets were sent from the IP address 127.0.0.1 to 127.0.0.1.
+Running the ifconfig command we get:
+
+"lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 1210515  bytes 5165996539 (5.1 GB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1210515  bytes 5165996539 (5.1 GB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+wlp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.18.70.40  netmask 255.255.252.0  broadcast 172.18.71.255
+        inet6 fe80::4700:6f39:e4ee:43e4  prefixlen 64  scopeid 0x20<link>
+        ether dc:e9:94:8f:6a:13  txqueuelen 1000  (Ethernet)
+        RX packets 18060089  bytes 19641777303 (19.6 GB)
+        RX errors 0  dropped 382  overruns 0  frame 0
+        TX packets 6015343  bytes 1077931250 (1.0 GB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0"
+
+We can tell our virtual IP address is indeed 127.0.0.1, but the IP address that correspond with our
+Network Card is 127.18.70.40.
+
+
+# TODO: change to pdf and ask Heine
