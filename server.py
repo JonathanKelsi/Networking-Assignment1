@@ -34,7 +34,7 @@ users = {}
 messages = []
 
 
-# utility function
+# utility functions
 def send_data(user_addr, n, lst):
     s.sendto(str(n).encode(), user_addr)
 
